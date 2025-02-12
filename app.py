@@ -1,13 +1,14 @@
 import streamlit as st
+import re
 import base64
 import pytesseract
 from PIL import Image
 from firebase_config import db
 from auth import login_user_func, signup_user_func
-# from expense_manager import save_expense
-from ocr_processor import extract_text_from_image
-# from ai_classifier import classify_expense
-
+import streamlit as st
+from ocr_processor import extract_text_and_classify
+from expense_manager import save_expense
+from fetch_expenses import fetch_expense_data, plot_monthly_expense,plot_daily_expense
 st.set_page_config(layout="wide")
 
 
@@ -34,6 +35,7 @@ st.markdown("""
     <p id="main-title">ExpenSee!</p>
 """, unsafe_allow_html=True)
 st.divider()
+
 
 #Login Home Page Content
 if st.session_state["page"] == "Home":
@@ -108,7 +110,7 @@ if st.session_state["page"] == "Home":
             signup_user = st.text_input("New Username:")
             signup_pass = st.text_input("New Password:", type="password")
             confirm_pass = st.text_input("Confirm Password:", type="password")
-            if st.button("Create Account"):
+            if st.button("Create Account") and (signup_pass == confirm_pass):
                 signup_user_func(signup_user,signup_pass,signup_name)
                 
         st.markdown('</div>', unsafe_allow_html=True)
@@ -141,29 +143,52 @@ if st.session_state["page"] == "input":
         c1,c2,c3 = st.columns([1,2,1])
         with c2:
             amount = st.text_input("Enter Amount Spent:")
-            category = st.selectbox("Select Category:", ["Food", "Games", "Shopping", "Other"])
+            category = st.selectbox("Select Category:", ["Food", "Clothes", "Games", "Study","Mandatory","Others"])
             
             if st.button("Save Expense"):
-                # db.collection("expenses").add({"amount": amount, "category": category})
-                st.success("✅ Expense Saved!")
+                save_expense(st.session_state['logged_in_user'],category,amount)
 
     elif option == "Upload Bill":
         c1,c2,c3 = st.columns([1,2,1])
         with c2:
-            uploaded_file = st.file_uploader("Upload your Bill", type=["png", "jpg", "jpeg"])
+                uploaded_file = st.file_uploader("Upload your Bill Image", type=["png", "jpg", "jpeg"])
+
+                if uploaded_file:
+                    st.write("🔍Analysis result-")
+                    extracted_text, predicted_category, detected_amount, matched_keywords = extract_text_and_classify(uploaded_file)
+                                    
+                    st.write("💰 **Detected Amount:**")
+                    st.success(detected_amount)
+
+                    st.write("🛒 **Predicted Expense Category:**")
+                    st.success(predicted_category)
+
+                    if st.button("Save AI-Classified Expense"):
+                        save_expense(st.session_state['logged_in_user'],predicted_category,detected_amount)
+
+
+if st.session_state["page"] == "analytics":
+    col1, col2, col3 = st.columns(3)
+
         
-        if uploaded_file:
-            img = Image.open(uploaded_file)
-            extracted_text = extract_text_from_image(img)  # OCR Process
-            
-            st.write("📜 Extracted Text from Bill:")
-            st.write(extracted_text)
+    with col1:
+        if st.button("INPUT", key="input_key_1", use_container_width=True):  # ✅ Unique Key
+            switch_page("input")
 
-            # **AI Classifier with Vertex AI will go here (Next Step)**
-            st.write("🔍 AI is analyzing the text to detect category...")
+    with col2:
+        if st.button("ANALYTICS", key="analytics_key1", use_container_width=True):  # ✅ Unique Key
+            switch_page("analytics")
 
-            if st.button("Save AI-Classified Expense"):
-                # Assume AI classified it as "Food"
-                ai_classified_category = "Food"  
-                # db.collection("expenses").add({"amount": "Auto-detected", "category": ai_classified_category})
-                st.success(f"✅ Expense Saved under '{ai_classified_category}'!")
+    with col3:
+        if st.button("SUMMARY", key="summary_key1", use_container_width=True):  # ✅ Unique Key
+            switch_page("summary")
+    st.markdown("<br>", unsafe_allow_html=True)  # Space after navbar
+    expense_df = fetch_expense_data(st.session_state['logged_in_user'])
+    
+    
+    col1,col2 = st.columns(2)
+    with col1:
+        plot_monthly_expense(expense_df)
+    
+    with col2:
+        plot_daily_expense(expense_df)
