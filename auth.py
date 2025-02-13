@@ -28,7 +28,7 @@ def login_user_func(username, password):
 
     user_data = user_ref.to_dict()
 
-    # ✅ Check if 'personal_info' field exists
+    #Check if 'personal_info' field exists
     if "personal details" not in user_data or "password" not in user_data["personal details"][0]:
         st.warning("⚠️ Password field missing in database!")
         return False
@@ -37,9 +37,9 @@ def login_user_func(username, password):
 
     if stored_password == password:
         st.success(f"✅ Welcome, {username}!")
+        st.session_state["logged_in_user"] = username  # Store session
         st.session_state["page"] = "input"
-
-        st.session_state["logged_in_user"] = username  # ✅ Store session
+        st.rerun()
         return True
     else:
         st.warning("❌ Incorrect password!")

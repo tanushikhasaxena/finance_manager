@@ -9,3 +9,6 @@ __pycache__/
 # Ignore system files
 .DS_Store
 Thumbs.db
+
+firebase_key.json
+vision_ai_key.json

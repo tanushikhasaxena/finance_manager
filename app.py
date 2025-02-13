@@ -9,15 +9,16 @@ import streamlit as st
 from ocr_processor import extract_text_and_classify
 from expense_manager import save_expense
 from fetch_expenses import fetch_expense_data, plot_monthly_expense,plot_daily_expense
+import datetime as dt
+
 st.set_page_config(layout="wide")
 
 
 
-# Initialize session state for navigation
 if "page" not in st.session_state:
     st.session_state["page"] = "Home"
 
-# Function to change pages
+
 def switch_page(page):
     st.session_state["page"] = page
 
@@ -37,7 +38,6 @@ st.markdown("""
 st.divider()
 
 
-#Login Home Page Content
 if st.session_state["page"] == "Home":
    
 
@@ -69,8 +69,7 @@ if st.session_state["page"] == "Home":
     # Create Login & Signup Toggle Buttons
     st.markdown('<div class="btn-container">', unsafe_allow_html=True)
  
-    # Create columns to center the form in wide layout
-    col1, col2, col3 = st.columns([2, 1, 3])  # Middle column will be wider
+    col1, col2, col3 = st.columns([2, 1, 3])  
     with col1:
         st.markdown("""
         <style>
@@ -93,9 +92,7 @@ if st.session_state["page"] == "Home":
     with col3: 
 
         st.markdown('<div class="form-container">', unsafe_allow_html=True)
-
         st.title("🔐 Login / Signup")
-
         option = st.radio("Select Option", ["Login", "Signup"], horizontal=True)
 
         if option == "Login":
@@ -117,26 +114,28 @@ if st.session_state["page"] == "Home":
 
 
 if st.session_state["page"] == "input":
+    col1,col2=st.columns([12,1])
+    with col2:
+        if st.button("LOG OUT", key="logout", use_container_width=True):
+            switch_page("Home")
+            st.rerun()
+
     col1, col2, col3 = st.columns(3)
 
     with col1:
         if st.button("INPUT", key="input_key", use_container_width=True):
             switch_page("input")
+            st.rerun()
 
     with col2:
         if st.button("ANALYTICS", key="analytics_key", use_container_width=True):
             switch_page("analytics")
+            st.rerun()
 
-    with col3:
-        if st.button("SUMMARY", key="summary_key", use_container_width=True):
-            switch_page("summary")
 
     st.markdown("<br>", unsafe_allow_html=True)  # Space after navbar
 
-
     st.title("💰 Expense Tracker")
-
-    # User selects how they want to input expenses
     option = st.radio("Choose Input Method:", ["Manual Entry", "Upload Bill"])
 
     if option == "Manual Entry":
@@ -168,27 +167,50 @@ if st.session_state["page"] == "input":
 
 
 if st.session_state["page"] == "analytics":
+    col1,col2=st.columns([12,1])
+    with col2:
+        if st.button("LOG OUT", key="logout", use_container_width=True):
+            switch_page("Home")
+            st.rerun()
+
     col1, col2, col3 = st.columns(3)
 
         
     with col1:
         if st.button("INPUT", key="input_key_1", use_container_width=True):  # ✅ Unique Key
             switch_page("input")
+            st.rerun()
 
     with col2:
         if st.button("ANALYTICS", key="analytics_key1", use_container_width=True):  # ✅ Unique Key
             switch_page("analytics")
+            st.rerun()
 
-    with col3:
-        if st.button("SUMMARY", key="summary_key1", use_container_width=True):  # ✅ Unique Key
-            switch_page("summary")
     st.markdown("<br>", unsafe_allow_html=True)  # Space after navbar
+
+
+
     expense_df = fetch_expense_data(st.session_state['logged_in_user'])
-    
-    
+   
+    available_months = ["Jan 2025"] 
+
+    #get current month
+    current_month = dt.datetime.now().strftime("%b %Y")
+    if current_month not in available_months:
+        available_months.append(current_month)
+
+    default_index = available_months.index(current_month)
+    available_months = sorted(list(available_months), key=lambda x: dt.datetime.strptime(x, "%b %Y"))
+
+
+    col1,col2,col3 = st.columns([1,2,1])
+    with col2:
+        selected_month = st.selectbox("📅 Select Month:", available_months, index=default_index)
+
+    #another set of columns
     col1,col2 = st.columns(2)
     with col1:
-        plot_monthly_expense(expense_df)
-    
+        plot_monthly_expense(expense_df,selected_month)
+        
     with col2:
-        plot_daily_expense(expense_df)
+        plot_daily_expense(expense_df,selected_month)

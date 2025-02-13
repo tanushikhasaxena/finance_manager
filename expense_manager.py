@@ -2,7 +2,7 @@ from firebase_config import db
 import streamlit as st
 import time
 import uuid
-from firebase_admin import firestore  # ✅ Firestore ko import kar
+from firebase_admin import firestore 
 
 def save_expense(user_id, category, amount):
     """Save expense inside user's document"""
@@ -18,8 +18,7 @@ def save_expense(user_id, category, amount):
     user_doc = user_ref.get()
 
     if user_doc.exists:
-        user_ref.update({"expenses": firestore.ArrayUnion([expense_data])})  # ✅ Add expense to list
+        user_ref.update({"expenses": firestore.ArrayUnion([expense_data])}) 
     else:
-        user_ref.set({"expenses": [expense_data]})  # ✅ Create user with first expense
-
+        user_ref.set({"expenses": [expense_data]}) 
     st.success(f"✅ Expense saved for user {user_id}")
