@@ -9,7 +9,7 @@ An intelligent expense tracking system that uses Optical Character Recognition (
 - 🧠 Preprocess and clean OCR output with image processing and regex
 - 📊 Visualize expenses interactively using **Plotly**
 - 🧾 Manually add/edit/delete entries
-- 📁 Export expense reports as CSV
+
 
 ## 🧠 Tech Stack
 
